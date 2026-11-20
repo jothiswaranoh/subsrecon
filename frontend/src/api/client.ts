@@ -37,8 +37,35 @@ const notifyUnauthorized = () => {
   unauthorizedListeners.forEach((listener) => listener());
 };
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9090';
+const API_URL_KEY = 'subsrecon_api_url';
+
+export const getStoredApiUrl = (): string | null => {
+  return typeof window !== 'undefined' ? localStorage.getItem(API_URL_KEY) : null;
+};
+
+export const setStoredApiUrl = (url: string): void => {
+  if (typeof window !== 'undefined') {
+    if (!url || !url.trim()) {
+      localStorage.removeItem(API_URL_KEY);
+    } else {
+      localStorage.setItem(API_URL_KEY, url.trim().replace(/\/+$/, ''));
+    }
+  }
+};
+
+const rawBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.API_BASE_URL ||
+  'http://127.0.0.1:9090';
 export const API_BASE_URL = rawBaseUrl.replace(/\/+$/, '');
+
+export const getApiBaseUrl = (): string => {
+  const custom = getStoredApiUrl();
+  if (custom && custom.trim()) {
+    return custom.trim().replace(/\/+$/, '');
+  }
+  return API_BASE_URL;
+};
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -50,6 +77,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    config.baseURL = getApiBaseUrl();
     const token = getStoredToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -26,6 +26,7 @@ export function getViteBase(): string {
 // https://vitejs.dev/config/
 export default defineConfig({
   base: getViteBase(),
+  envPrefix: ["VITE_", "API_"],
   plugins: [react()],
   resolve: {
     alias: {
